@@ -7,12 +7,31 @@ const connectDB = require("./config/db");
 const app = express();
 
 // FRONTEND_ORIGIN should match your dev server (vite) origin, e.g. http://localhost:5173
+// server.js (replace the existing app.use(cors({...})) block with the code below)
+
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
+
+// allow both production (from env) and local dev
+const allowedOrigins = [
+  FRONTEND_ORIGIN, // e.g. https://new-daily-quotes.vercel.app (set on Render)
+  "http://localhost:5173", // Vite dev server
+].filter(Boolean);
 
 app.use(
   cors({
-    origin: FRONTEND_ORIGIN,
-    // credentials: true, // not needed for header-only JWT flow
+    origin: function (origin, callback) {
+      // allow requests with no origin (e.g. curl, Postman)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        return callback(null, true);
+      }
+      return callback(
+        new Error("CORS policy violation: origin not allowed"),
+        false
+      );
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
 
