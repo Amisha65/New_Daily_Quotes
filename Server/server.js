@@ -8,32 +8,34 @@ const app = express();
 
 // FRONTEND_ORIGIN should match your dev server (vite) origin, e.g. http://localhost:5173
 // server.js (replace the existing app.use(cors({...})) block with the code below)
-
+// CORS FIX — safe for OPTIONS and works on Render + Vercel + Localhost
 const FRONTEND_ORIGIN = process.env.FRONTEND_ORIGIN || "http://localhost:5173";
 
-// allow both production (from env) and local dev
 const allowedOrigins = [
-  FRONTEND_ORIGIN, // e.g. https://new-daily-quotes.vercel.app (set on Render)
-  "http://localhost:5173", // Vite dev server
+  FRONTEND_ORIGIN, // production vercel URL
+  "http://localhost:5173", // local dev
 ].filter(Boolean);
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      // allow requests with no origin (e.g. curl, Postman)
+      // allow REST clients (curl/Postman) with no origin
       if (!origin) return callback(null, true);
-      if (allowedOrigins.indexOf(origin) !== -1) {
+
+      if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(
-        new Error("CORS policy violation: origin not allowed"),
-        false
-      );
+
+      // ❗ DON'T THROW — just deny with false
+      return callback(null, false);
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );
+
+// HANDLE OPTIONS requests for all routes
+app.options("*", cors());
 
 app.use(express.json());
 
