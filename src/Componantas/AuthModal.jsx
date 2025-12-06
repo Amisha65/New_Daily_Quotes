@@ -1,6 +1,6 @@
 // src/Componantas/AuthModal.jsx
 import { useState } from "react";
-import { setToken } from "../auth";
+import { authFetch, setToken } from "../auth";
 import { IoIosArrowBack } from "react-icons/io";
 
 const AuthModal = ({ onSuccess, onCancel }) => {
@@ -21,14 +21,19 @@ const AuthModal = ({ onSuccess, onCancel }) => {
       const body =
         mode === "login" ? { email, password } : { name, email, password };
 
-      const res = await fetch(path, {
+      // Use authFetch (it prefixes VITE_API_BASE when present and sets headers)
+      const res = await authFetch(path, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
       // Debug: log where the request went and the status
-      console.debug("Auth response:", res.url, res.status);
+      try {
+        console.debug("Auth response:", res.url, res.status);
+      } catch (err) {
+        // ignore logging errors
+        console.debug("Auth response: (couldn't read res.url)", err);
+      }
 
       // Safely get response body text and try parse to JSON
       const text = await res.text();
